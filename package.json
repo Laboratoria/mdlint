@@ -1,0 +1,24 @@
+{
+  "name": "mdlint",
+  "version": "1.0.0",
+  "bin": {
+    "mdlint": "./index.js"
+  },
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Laboratoria",
+    "email": "sumate@laboratoria.la",
+    "url": "http://laboratoria.la/"
+  },
+  "contributors": [
+    "Lupo Montero <lupo@laboratoria.la> (https://github.com/lupomontero)"
+  ],
+  "dependencies": {
+    "async": "^2.5.0",
+    "chalk": "^2.0.1",
+    "eslint": "^4.3.0",
+    "glob": "^7.1.2",
+    "markdownlint": "^0.6.0",
+    "minimist": "^1.2.0"
+  }
+}
