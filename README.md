@@ -8,13 +8,13 @@ CLI tool to lint your **markdown** files using the
 Globally:
 
 ```sh
-npm i -g mdlint
+npm i -g Laboratoria/mdlint
 ```
 
 In your project:
 
 ```sh
-npm i --save-dev mdlint
+npm i --save-dev Laboratoria/mdlint
 ```
 
 Once you have installed it in your project you can add a task in your
