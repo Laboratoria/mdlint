@@ -15,7 +15,6 @@ const Pkg = require('./package.json');
 const internals = {};
 
 
-
 internals.readConfig = (file, cb) => {
   Markdownlint.readConfig(file, (err, config) => {
     cb(null, (!err && config) || { default: true });
@@ -74,22 +73,34 @@ internals.readFiles = (paths, opts, cb) => {
 
 internals.printResults = (results, verbose) => {
   const rulesUrl = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
+  const stats = { files: 0, total: 0 };
   Object.keys(results).forEach(key => {
-    if (results[key].length) {
-      console.log(Chalk.underline(key));
-      results[key].forEach(result => {
-        console.log([
-          Chalk.grey(`  ${result.lineNumber}`),
-          (result.errorRange && Chalk.grey(`:${result.errorRange[0]}`)) || '',
-          Chalk.blueBright(` ${result.ruleAlias}`),
-          Chalk.bold(` ${result.ruleDescription}`),
-          (result.errorDetail && ` [${result.errorDetail}]`) || '',
-          (result.errorContext && Chalk.italic(` "${result.errorContext}"`) || ''),
-          (verbose && Chalk.dim(` ${rulesUrl}#${result.ruleName.toLowerCase()}`))
-        ].join(''));
-      });
+    if (!results[key].length) {
+      return;
     }
+    stats.files++;
+    console.log(Chalk.underline(key));
+    results[key].forEach(result => {
+      stats.total++;
+      stats[result.ruleAlias] = (stats[result.ruleAlias] + 1) || 1;
+      console.log([
+        Chalk.grey(`  ${result.lineNumber}`),
+        (result.errorRange && Chalk.grey(`:${result.errorRange[0]}`)) || '',
+        Chalk.yellow(` ${result.ruleAlias}`),
+        Chalk.bold.blue(` ${result.ruleDescription}`),
+        (result.errorDetail && ` [${result.errorDetail}]`) || '',
+        (result.errorContext && Chalk.italic(` "${result.errorContext}"`) || ''),
+        (verbose && Chalk.dim(` ${rulesUrl}#${result.ruleName.toLowerCase()}`))
+      ].join(''));
+    });
   });
+  console.log('\nSummary:')
+  console.log(`${stats.total} issues in ${stats.files} file(s)`);
+  Object.keys(stats)
+    .filter(k => ['total', 'files'].indexOf(k) < 0)
+    .forEach(k => console.log(` - ${Chalk.yellow(k)} ${stats[k]}`));
+
+  (stats.total && process.exit(1)) || process.exit(0);
 };
 
 
@@ -151,7 +162,6 @@ if (require.main === module) {
       }
       else {
         internals.printResults(results, args.v || args.verbose);
-        process.exit(0);
       }
     });
   });
