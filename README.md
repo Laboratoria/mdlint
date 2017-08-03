@@ -28,7 +28,7 @@ Once you have installed it in your project you can add a task in your
     "lint": "mdlint ."
   },
   "devDependencies": {
-    "mdlint": "^1.0.0"
+    "mdlint": "Laboratoria/mdlint"
   }
 }
 ```
