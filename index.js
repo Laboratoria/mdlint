@@ -105,9 +105,11 @@ internals.help = () => console.log(`Usage:
 
 Options:
 
-  -h, --help
-  -v, --verbose
-  -V, --version
+  -c, --config   Path to config file. Default: '.mdlintrc'
+  -i, --ignore   Path to file with patterns to ignore. Default: '.mdlintignore'
+  -v, --verbose  Show verbose output.
+  -h, --help     Show this help.
+  -V, --version  Show ${Pkg.name} version.
 
 ${Pkg.author.name} ${(new Date()).getFullYear()}`);
 
@@ -137,8 +139,8 @@ if (require.main === module) {
   }
 
   Async.auto({
-    config: Async.apply(internals.readConfig, args.config || '.mdlintrc'),
-    ignore: Async.apply(internals.readIgnore, args.ignore || '.mdlintignore'),
+    config: Async.apply(internals.readConfig, args.c || args.config || '.mdlintrc'),
+    ignore: Async.apply(internals.readIgnore, args.i || args.ignore || '.mdlintignore'),
   }, (err, opts) => {
     if (err) {
       return internals.printError(err);
