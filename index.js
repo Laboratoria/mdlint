@@ -15,26 +15,23 @@ const Pkg = require('./package.json');
 const internals = {};
 
 
-internals.readConfig = (file, cb) => {
-  Markdownlint.readConfig(file, (err, config) => {
-    cb(null, (!err && config) || { default: true });
-  });
-};
+internals.readConfig = (file, cb) => Markdownlint.readConfig(
+  file,
+  (err, config) => cb(null, (!err && config) || { default: true })
+);
 
 
-internals.readIgnore = (file, cb) => {
-  Fs.exists(file, exists => {
-    if (!exists) {
+internals.readIgnore = (file, cb) => Fs.exists(file, exists => {
+  if (!exists) {
+    return cb(null, []);
+  }
+  Fs.readFile(file, 'utf8', (err, data) => {
+    if (err) {
       return cb(null, []);
     }
-    Fs.readFile(file, 'utf8', (err, data) => {
-      if (err) {
-        return cb(null, []);
-      }
-      cb(null, data.trim().split('\n'));
-    });
+    cb(null, data.trim().split('\n'));
   });
-};
+});
 
 
 internals.hasKnownExtension = fname => [
@@ -46,29 +43,29 @@ internals.hasKnownExtension = fname => [
 ].indexOf(fname.split('.').pop()) >= 0;
 
 
-internals.readFiles = (paths, opts, cb) => {
-  Async.map(paths.map(p => Path.join(process.cwd(), p)), (path, mapCb) => {
-    Fs.stat(path, (err, stats) => {
-      if (err) {
-        return mapCb(err);
-      }
-      else if (stats.isDirectory()) {
-        // TODO: only add `/**` if is dir??
-        Glob(Path.join(path, '**', '**'), {
-          ignore: opts.ignore.map(i => Path.join(path, i + '/**'))
-        }, mapCb);
-      }
-      else {
-        mapCb(null, path);
-      }
-    });
-  }, (err, results) => {
+internals.readFiles = (paths, opts, cb) => Async.map(
+  paths.map(p => Path.join(process.cwd(), p)),
+  (path, mapCb) => Fs.stat(path, (err, stats) => {
     if (err) {
-      return cb(err);
+      return mapCb(err);
     }
-    cb(null, [].concat(...results).filter(internals.hasKnownExtension));
-  });
-};
+    else if (stats.isDirectory()) {
+      // TODO: only add `/**` if is dir??
+      Glob(Path.join(path, '**', '**'), {
+        ignore: opts.ignore.map(i => Path.join(path, i + '/**'))
+      }, mapCb);
+    }
+    else {
+      mapCb(null, path);
+    }
+  }),
+  (err, results) =>
+    (err && cb(err)) || cb(null, [].concat(...results).filter(internals.hasKnownExtension))
+);
+
+
+internals.sortResults = (a, b) =>
+  (a.lineNumber > b.lineNumber && 1) || (a.lineNumber < b.lineNumber && -1) || 0;
 
 
 internals.printResults = (results, verbose) => {
@@ -80,7 +77,7 @@ internals.printResults = (results, verbose) => {
     }
     stats.files++;
     console.log(Chalk.underline(key));
-    results[key].forEach(result => {
+    results[key].sort(internals.sortResults).forEach(result => {
       stats.total++;
       stats[result.ruleAlias] = (stats[result.ruleAlias] + 1) || 1;
       console.log([
@@ -125,16 +122,11 @@ Options:
 ${Pkg.author.name} ${(new Date()).getFullYear()}`);
 
 
-module.exports = (paths, opts, cb) => {
-
-  internals.readFiles(paths, opts, (err, files) => {
-    if (err) {
-      return cb(err);
-    }
-
-    Markdownlint({ files, config: opts.config }, cb);
-  });
-};
+module.exports = (paths, opts, cb) => internals.readFiles(
+  paths,
+  opts,
+  (err, files) => (err && cb(err)) || Markdownlint({ files, config: opts.config }, cb)
+);
 
 
 if (require.main === module) {
@@ -156,13 +148,8 @@ if (require.main === module) {
     if (err) {
       return internals.printError(err);
     }
-    module.exports(args._, opts, (err, results) => {
-      if (err) {
-        internals.printError(err);
-      }
-      else {
-        internals.printResults(results, args.v || args.verbose);
-      }
-    });
+
+    module.exports(args._, opts, (err, results) =>
+      err ? internals.printError(err) : internals.printResults(results, args.v || args.verbose));
   });
 }
