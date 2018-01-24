@@ -49,18 +49,17 @@ internals.readFiles = (paths, opts, cb) => Async.map(
     if (err) {
       return mapCb(err);
     }
-    else if (stats.isDirectory()) {
+    if (stats.isDirectory()) {
       // TODO: only add `/**` if is dir??
-      Glob(Path.join(path, '**', '**'), {
+      return Glob(Path.join(path, '**', '**'), {
         ignore: opts.ignore.map(i => Path.join(path, i + '/**'))
       }, mapCb);
     }
-    else {
-      mapCb(null, path);
-    }
+    return mapCb(null, path);
   }),
-  (err, results) =>
-    (err && cb(err)) || cb(null, [].concat(...results).filter(internals.hasKnownExtension))
+  (err, results) => err
+    ? cb(err)
+    : cb(null, [].concat(...results).filter(internals.hasKnownExtension))
 );
 
 
@@ -83,11 +82,11 @@ internals.printResults = (results, verbose) => {
       console.log([
         Chalk.grey(`  ${result.lineNumber}`),
         (result.errorRange && Chalk.grey(`:${result.errorRange[0]}`)) || '',
-        Chalk.yellow(` ${result.ruleAlias}`),
+        Chalk.yellow(` ${result.ruleNames[1]} [${result.ruleNames[0]}]`),
         Chalk.bold.blue(` ${result.ruleDescription}`),
         (result.errorDetail && ` [${result.errorDetail}]`) || '',
         (result.errorContext && Chalk.italic(` "${result.errorContext}"`) || ''),
-        (verbose && Chalk.dim(` ${rulesUrl}#${result.ruleName.toLowerCase()}`))
+        (verbose && Chalk.dim(` ${rulesUrl}#${result.ruleNames[0].toLowerCase()}`))
       ].join(''));
     });
   });
@@ -125,7 +124,7 @@ ${Pkg.author.name} ${(new Date()).getFullYear()}`);
 module.exports = (paths, opts, cb) => internals.readFiles(
   paths,
   opts,
-  (err, files) => (err && cb(err)) || Markdownlint({ files, config: opts.config }, cb)
+  (err, files) => err ? cb(err) : Markdownlint({ files, config: opts.config }, cb),
 );
 
 
@@ -150,6 +149,8 @@ if (require.main === module) {
     }
 
     module.exports(args._, opts, (err, results) =>
-      err ? internals.printError(err) : internals.printResults(results, args.v || args.verbose));
+      err
+        ? internals.printError(err)
+        : internals.printResults(results, args.v || args.verbose));
   });
 }
