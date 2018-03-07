@@ -15,8 +15,7 @@
   ],
   "dependencies": {
     "async": "^2.6.0",
-    "chalk": "^2.3.0",
-    "eslint": "^4.16.0",
+    "chalk": "^2.3.2",
     "glob": "^7.1.2",
     "markdownlint": "^0.7.0",
     "minimist": "^1.2.0"
