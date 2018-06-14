@@ -131,12 +131,13 @@ module.exports = (paths, opts, cb) => internals.readFiles(
 if (require.main === module) {
   const args = Minimist(process.argv.slice(2));
 
-  if (!args._.length || args.h || args.help) {
-    internals.help();
+  if (args.V || args.version) {
+    console.log(Pkg.version);
     process.exit(0);
   }
-  else if (args.V || args.version) {
-    console.log(Pkg.version);
+
+  if (!args._.length || args.h || args.help) {
+    internals.help();
     process.exit(0);
   }
 
