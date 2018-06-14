@@ -14,10 +14,10 @@
     "Lupo Montero <lupo@laboratoria.la> (https://github.com/lupomontero)"
   ],
   "dependencies": {
-    "async": "^2.6.0",
-    "chalk": "^2.3.2",
+    "async": "^2.6.1",
+    "chalk": "^2.4.1",
     "glob": "^7.1.2",
-    "markdownlint": "^0.7.0",
+    "markdownlint": "^0.10.0",
     "minimist": "^1.2.0"
   }
 }
