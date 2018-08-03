@@ -17,7 +17,7 @@
     "async": "^2.6.1",
     "chalk": "^2.4.1",
     "glob": "^7.1.2",
-    "markdownlint": "^0.10.0",
+    "markdownlint": "^0.11.0",
     "minimist": "^1.2.0"
   }
 }
