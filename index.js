@@ -1,40 +1,49 @@
 #! /usr/bin/env node
-'use strict';
 
 
-const Fs = require('fs');
-const Path = require('path');
-const Async = require('async');
-const Minimist = require('minimist');
-const Glob = require('glob');
-const Chalk = require('chalk');
-const Markdownlint = require('markdownlint');
-const Pkg = require('./package.json');
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
+const minimist = require('minimist');
+const glob = require('glob');
+const chalk = require('chalk');
+const markdownlint = require('markdownlint');
+const pkg = require('./package.json');
 
 
-const internals = {};
+const resolvePaths = paths => paths
+  .map(p => path.resolve(p))
+  .reduce(
+    (memo, p) => {
+      const parent = memo.find(item => p.indexOf(item) === 0);
+      const children = memo.filter(item => item.indexOf(p) === 0);
+      if (parent) {
+        return memo;
+      }
+      if (children) {
+        return [...memo, p].filter(item => !children.includes(item))
+      }
+      return [...memo, p];
+    },
+    [],
+  );
 
 
-internals.readConfig = (file, cb) => Markdownlint.readConfig(
-  file,
-  (err, config) => cb(null, (!err && config) || { default: true })
-);
+const readConfig = file => promisify(markdownlint.readConfig)(file)
+  .catch(err => ({ default: true }));
 
 
-internals.readIgnore = (file, cb) => Fs.exists(file, exists => {
-  if (!exists) {
-    return cb(null, []);
-  }
-  Fs.readFile(file, 'utf8', (err, data) => {
-    if (err) {
-      return cb(null, []);
-    }
-    cb(null, data.trim().split('\n'));
-  });
-});
+const readIgnore = file => promisify(fs.exists)(file)
+  .then(exists => (
+    !exists
+      ? []
+      : promisify(fs.readFile)(file, 'utf8')
+        .then(data => data.trim().split('\n'))
+        .catch(() => [])
+  ));
 
 
-internals.hasKnownExtension = fname => [
+const hasKnownExtension = fname => [
   'markdown',
   'mdown',
   'mkdn',
@@ -43,50 +52,46 @@ internals.hasKnownExtension = fname => [
 ].indexOf(fname.split('.').pop()) >= 0;
 
 
-internals.readFiles = (paths, opts, cb) => Async.map(
-  paths.map(p => Path.join(process.cwd(), p)),
-  (path, mapCb) => Fs.stat(path, (err, stats) => {
-    if (err) {
-      return mapCb(err);
-    }
-    if (stats.isDirectory()) {
-      // TODO: only add `/**` if is dir??
-      return Glob(Path.join(path, '**', '**'), {
-        ignore: opts.ignore.map(i => Path.join(path, i + '/**'))
-      }, mapCb);
-    }
-    return mapCb(null, path);
-  }),
-  (err, results) => err
-    ? cb(err)
-    : cb(null, [].concat(...results).filter(internals.hasKnownExtension))
-);
+const readFiles = (paths, opts) => Promise.all(
+  paths.map(p => promisify(fs.stat)(p).then(stats => (
+    stats.isDirectory()
+      ? promisify(glob)(path.join(p, '**', '**'), {
+        ignore: opts.ignore.map(i => path.join(p, i, '**')),
+      })
+      : p
+  )))
+)
+  .then(results => results.reduce(
+    (memo, item) => memo.concat(item),
+    [],
+  ))
+  .then(files => files.filter(hasKnownExtension));
 
 
-internals.sortResults = (a, b) =>
+const sortResults = (a, b) =>
   (a.lineNumber > b.lineNumber && 1) || (a.lineNumber < b.lineNumber && -1) || 0;
 
 
-internals.printResults = (results, verbose) => {
+const printResults = (results, verbose) => {
   const rulesUrl = 'https://github.com/DavidAnson/markdownlint/blob/master/doc/Rules.md';
   const stats = { files: 0, total: 0 };
-  Object.keys(results).forEach(key => {
+  Object.keys(results).forEach((key) => {
     if (!results[key].length) {
       return;
     }
     stats.files++;
-    console.log(Chalk.underline(key));
-    results[key].sort(internals.sortResults).forEach(result => {
+    console.log(chalk.underline(key));
+    results[key].sort(sortResults).forEach(result => {
       stats.total++;
       stats[result.ruleAlias] = (stats[result.ruleAlias] + 1) || 1;
       console.log([
-        Chalk.grey(`  ${result.lineNumber}`),
-        (result.errorRange && Chalk.grey(`:${result.errorRange[0]}`)) || '',
-        Chalk.yellow(` ${result.ruleNames[1]} [${result.ruleNames[0]}]`),
-        Chalk.bold.blue(` ${result.ruleDescription}`),
+        chalk.grey(`  ${result.lineNumber}`),
+        (result.errorRange && chalk.grey(`:${result.errorRange[0]}`)) || '',
+        chalk.yellow(` ${result.ruleNames[1]} [${result.ruleNames[0]}]`),
+        chalk.bold.blue(` ${result.ruleDescription}`),
         (result.errorDetail && ` [${result.errorDetail}]`) || '',
-        (result.errorContext && Chalk.italic(` "${result.errorContext}"`) || ''),
-        (verbose && Chalk.dim(` ${rulesUrl}#${result.ruleNames[0].toLowerCase()}`))
+        (result.errorContext && chalk.italic(` "${result.errorContext}"`) || ''),
+        (verbose && chalk.dim(` ${rulesUrl}#${result.ruleNames[0].toLowerCase()}`))
       ].join(''));
     });
   });
@@ -94,19 +99,19 @@ internals.printResults = (results, verbose) => {
   console.log(`${stats.total} issues in ${stats.files} file(s)`);
   Object.keys(stats)
     .filter(k => ['total', 'files'].indexOf(k) < 0)
-    .forEach(k => console.log(` - ${Chalk.yellow(k)} ${stats[k]}`));
+    .forEach(k => console.log(` - ${chalk.yellow(k)} ${stats[k]}`));
 
   (stats.total && process.exit(1)) || process.exit(0);
 };
 
 
-internals.printError = err => {
+const printError = err => {
   console.error(err);
   process.exit(1);
 };
 
 
-internals.help = () => console.log(`Usage:
+const help = () => console.log(`Usage:
 
   mdlint [path1] [path2] ...
 
@@ -116,42 +121,33 @@ Options:
   -i, --ignore   Path to file with patterns to ignore. Default: '.mdlintignore'
   -v, --verbose  Show verbose output.
   -h, --help     Show this help.
-  -V, --version  Show ${Pkg.name} version.
+  -V, --version  Show ${pkg.name} version.
 
-${Pkg.author.name} ${(new Date()).getFullYear()}`);
+${pkg.author.name} ${(new Date()).getFullYear()}`);
 
 
-module.exports = (paths, opts, cb) => internals.readFiles(
-  paths,
-  opts,
-  (err, files) => err ? cb(err) : Markdownlint({ files, config: opts.config }, cb),
-);
+module.exports = (paths, opts = {}) => readFiles(resolvePaths(paths), opts)
+  .then(files => promisify(markdownlint)({ files, config: opts.config }));
 
 
 if (require.main === module) {
-  const args = Minimist(process.argv.slice(2));
+  const { _: paths, ...opts } = minimist(process.argv.slice(2));
 
-  if (args.V || args.version) {
-    console.log(Pkg.version);
+  if (opts.V || opts.version) {
+    console.log(pkg.version);
     process.exit(0);
   }
 
-  if (!args._.length || args.h || args.help) {
-    internals.help();
+  if (!paths.length || opts.h || opts.help) {
+    help();
     process.exit(0);
   }
 
-  Async.auto({
-    config: Async.apply(internals.readConfig, args.c || args.config || '.mdlintrc'),
-    ignore: Async.apply(internals.readIgnore, args.i || args.ignore || '.mdlintignore'),
-  }, (err, opts) => {
-    if (err) {
-      return internals.printError(err);
-    }
-
-    module.exports(args._, opts, (err, results) =>
-      err
-        ? internals.printError(err)
-        : internals.printResults(results, args.v || args.verbose));
-  });
+  Promise.all([
+    readConfig(opts.c || opts.config || '.mdlintrc'),
+    readIgnore(opts.i || opts.ignore || '.mdlintignore'),
+  ])
+    .then(([config, ignore]) => module.exports(paths, { config, ignore }))
+    .then(printResults)
+    .catch(printError);
 }
