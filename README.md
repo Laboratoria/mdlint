@@ -1,4 +1,4 @@
-# mdlint
+# @laboratoria/mdlint
 
 CLI tool to lint your **markdown** files using the
 [markdownlint](https://github.com/DavidAnson/markdownlint) module.
@@ -10,13 +10,13 @@ CLI tool to lint your **markdown** files using the
 Globally:
 
 ```sh
-npm i -g Laboratoria/mdlint
+npm i -g @laboratoria/mdlint
 ```
 
 In your project:
 
 ```sh
-npm i --save-dev Laboratoria/mdlint
+npm i --save-dev @laboratoria/mdlint
 ```
 
 Once you have installed it in your project you can add a task in your
@@ -30,7 +30,7 @@ Once you have installed it in your project you can add a task in your
     "lint": "mdlint ."
   },
   "devDependencies": {
-    "mdlint": "Laboratoria/mdlint"
+    "@laboratoria/mdlint": "^1.0.2"
   }
 }
 ```

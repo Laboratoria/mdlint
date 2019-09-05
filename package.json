@@ -1,6 +1,7 @@
 {
-  "name": "mdlint",
+  "name": "@laboratoria/mdlint",
   "version": "1.0.2",
+  "license": "Apache-2.0",
   "bin": {
     "mdlint": "./index.js"
   },
@@ -8,7 +9,6 @@
     "pretest": "eslint .",
     "test": "jest --verbose --coverage"
   },
-  "license": "Apache-2.0",
   "author": {
     "name": "Laboratoria",
     "email": "sumate@laboratoria.la",
