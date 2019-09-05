@@ -21,7 +21,7 @@ const resolvePaths = paths => paths
         return memo;
       }
       if (children) {
-        return [...memo, p].filter(item => !children.includes(item))
+        return [...memo, p].filter(item => !children.includes(item));
       }
       return [...memo, p];
     },
@@ -30,7 +30,7 @@ const resolvePaths = paths => paths
 
 
 const readConfig = file => promisify(markdownlint.readConfig)(file)
-  .catch(err => ({ default: true }));
+  .catch(() => ({ default: true }));
 
 
 const readIgnore = file => promisify(fs.exists)(file)
@@ -48,7 +48,7 @@ const hasKnownExtension = fname => [
   'mdown',
   'mkdn',
   'mkd',
-  'md'
+  'md',
 ].indexOf(fname.split('.').pop()) >= 0;
 
 
@@ -59,7 +59,7 @@ const readFiles = (paths, opts) => Promise.all(
         ignore: opts.ignore.map(i => path.join(p, i, '**')),
       })
       : p
-  )))
+  ))),
 )
   .then(results => results.reduce(
     (memo, item) => memo.concat(item),
@@ -68,8 +68,11 @@ const readFiles = (paths, opts) => Promise.all(
   .then(files => files.filter(hasKnownExtension));
 
 
-const sortResults = (a, b) =>
-  (a.lineNumber > b.lineNumber && 1) || (a.lineNumber < b.lineNumber && -1) || 0;
+const sortResults = (a, b) => (
+  (a.lineNumber > b.lineNumber && 1)
+  || (a.lineNumber < b.lineNumber && -1)
+  || 0
+);
 
 
 const printResults = (results, verbose) => {
@@ -79,33 +82,33 @@ const printResults = (results, verbose) => {
     if (!results[key].length) {
       return;
     }
-    stats.files++;
+    stats.files += 1;
     console.log(chalk.underline(key));
-    results[key].sort(sortResults).forEach(result => {
-      stats.total++;
+    results[key].sort(sortResults).forEach((result) => {
+      stats.total += 1;
       stats[result.ruleAlias] = (stats[result.ruleAlias] + 1) || 1;
       console.log([
         chalk.grey(`  ${result.lineNumber}`),
         (result.errorRange && chalk.grey(`:${result.errorRange[0]}`)) || '',
         chalk.yellow(` ${result.ruleNames[1]} [${result.ruleNames[0]}]`),
         chalk.bold.blue(` ${result.ruleDescription}`),
-        (result.errorDetail && ` [${result.errorDetail}]`) || '',
-        (result.errorContext && chalk.italic(` "${result.errorContext}"`) || ''),
-        (verbose && chalk.dim(` ${rulesUrl}#${result.ruleNames[0].toLowerCase()}`))
+        result.errorDetail ? ` [${result.errorDetail}]` : '',
+        result.errorContext ? chalk.italic(` "${result.errorContext}"`) : '',
+        (verbose && chalk.dim(` ${rulesUrl}#${result.ruleNames[0].toLowerCase()}`)),
       ].join(''));
     });
   });
-  console.log('\nSummary:')
+  console.log('\nSummary:');
   console.log(`${stats.total} issues in ${stats.files} file(s)`);
   Object.keys(stats)
     .filter(k => ['total', 'files'].indexOf(k) < 0)
     .forEach(k => console.log(` - ${chalk.yellow(k)} ${stats[k]}`));
 
-  (stats.total && process.exit(1)) || process.exit(0);
+  process.exit(stats.total ? 1 : 0);
 };
 
 
-const printError = err => {
+const printError = (err) => {
   console.error(err);
   process.exit(1);
 };
