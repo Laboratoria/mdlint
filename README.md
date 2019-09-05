@@ -3,6 +3,8 @@
 CLI tool to lint your **markdown** files using the
 [markdownlint](https://github.com/DavidAnson/markdownlint) module.
 
+[![Build Status](https://travis-ci.com/Laboratoria/mdlint.svg?branch=master)](https://travis-ci.com/Laboratoria/mdlint)
+
 ## Installation
 
 Globally:
