@@ -5,6 +5,7 @@
     "mdlint": "./index.js"
   },
   "scripts": {
+    "pretest": "eslint .",
     "test": "jest --verbose --coverage"
   },
   "license": "Apache-2.0",
@@ -23,6 +24,9 @@
     "minimist": "^1.2.0"
   },
   "devDependencies": {
+    "eslint": "^6.3.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
     "jest": "^24.9.0"
   }
 }
