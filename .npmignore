@@ -1,0 +1,4 @@
+.editorconfig
+.eslintrc    
+index.spec.js
+.travis.yml
