@@ -1,4 +1,4 @@
-const mdlint = require('./');
+const mdlint = require('.');
 
 describe('mdlint', () => {
   it('should be a function', () => {
