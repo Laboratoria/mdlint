@@ -3,7 +3,7 @@
 CLI tool to lint your **markdown** files using the
 [markdownlint](https://github.com/DavidAnson/markdownlint) module.
 
-![Node.js CI](https://github.com/Laboratoria/mdlint/workflows/Node.js%20CI/badge.svg)
+[![Node.js CI](https://github.com/Laboratoria/mdlint/actions/workflows/nodejs.yml/badge.svg)](https://github.com/Laboratoria/mdlint/actions/workflows/nodejs.yml)
 
 ## Installation
 
