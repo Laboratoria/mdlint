@@ -1,5 +1,5 @@
+.github/
 coverage/
 .editorconfig
-.eslintrc    
+.eslintrc
 index.spec.js
-.travis.yml
