@@ -2,6 +2,7 @@
   "name": "@laboratoria/mdlint",
   "version": "1.2.0",
   "license": "Apache-2.0",
+  "repository": "Laboratoria/mdlint",
   "bin": {
     "mdlint": "./index.js"
   },
